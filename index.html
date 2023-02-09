@@ -1,4 +1,3 @@
-
 <div class="latestVideoEmbed" id="player" vnum='0' cid="UCUjBEPnZZvXKNSQdGHUxLaQ" style="position: fixed;
 right: 0;
 bottom: 0;
@@ -12,59 +11,60 @@ z-index: -100;}" allow="accelerometer; autoplay; clipboard-write; encrypted-medi
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 
 <script>
+
 var reqURL = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://www.youtube.com/feeds/videos.xml?channel_id=");
 
 function loadVideo(iframe) {
-  $.getJSON(reqURL + iframe.getAttribute('cid'),
-    function(data) {
-      var videoNumber = (iframe.getAttribute('vnum') ? Number(iframe.getAttribute('vnum')) : 0);
-      console.log(videoNumber);
-      var link = data.items[videoNumber].link;
-      var title=data.items[videoNumber].title;
-      id = link.substr(link.indexOf("=") + 1);
-      iframe.setAttribute("src", "https://youtube.com/embed/" + id + "?rel=0?version=3&autoplay=1&cc_load_policy=1&cc_lang_pref=en&controls=1&showinfo=1&loop=1&playlist=" + id);
-      iframe.parentElement.querySelector("#video-title").innerText = title;
-    }
-  );
+  $.getJSON(reqURL + iframe.getAttribute('cid'),
+    function(data) {
+      var videoNumber = (iframe.getAttribute('vnum') ? Number(iframe.getAttribute('vnum')) : 0);
+      console.log(videoNumber);
+      var link = data.items[videoNumber].link;
+      var title=data.items[videoNumber].title;
+      id = link.substr(link.indexOf("=") + 1);
+
+      iframe.setAttribute("src", "https://youtube.com/embed/" + id + "?rel=0?version=3&autoplay=1&cc_load_policy=1&cc_lang_pref=en&controls=1&showinfo=1&loop=1&enablejsapi=1&playlist=" + id);
+    }
+  );
 }
 
 
 var iframes = document.getElementsByClassName('latestVideoEmbed');
 for (var i = 0, len = iframes.length; i < len; i++) {
-  loadVideo(iframes[i]);
-  const tag = document.createElement('script')
+  loadVideo(iframes[i]);
+  const tag = document.createElement('script')
 tag.src = 'https://www.youtube.com/iframe_api'
 const firstScriptTag = document.getElementsByTagName('script')[0]
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
 
 let player
 
-const onApiChange = _ => {   
-  if (typeof player.setOption === 'function') {
-    player.setOption('captions', 'track', {languageCode: 'en'})
-  }  
+const onApiChange = _ => {   
+  if (typeof player.setOption === 'function') {
+    player.setOption('captions', 'track', {languageCode: 'en'})
+  }  
 }
 
-const onReady = _ => {   
-  player.playVideo()
+const onReady = _ => {   
+  player.playVideo()
 }
 
 function onYouTubePlayerAPIReady() {
-  player = new YT.Player('player', {
-    videoId: id,
-    playerVars: {
-      'cc_load_policy': 1,
-      'controls': 0,           
-      'showinfo': 0,
-      'rel': 0,
-      'loop': 1,
-      'playlist': id
-    },
-    events: {
-      onReady,
-      onApiChange
-    }
-  })
+  player = new YT.Player('player', {
+    videoId: id,
+    playerVars: {
+      'cc_load_policy': 1,
+      'controls': 0,           
+      'showinfo': 0,
+      'rel': 0,
+      'loop': 1,
+      'playlist': id
+    },
+    events: {
+      onReady,
+      onApiChange
+    }
+  })
 }
 }
 
