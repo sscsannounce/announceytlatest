@@ -1,75 +1,53 @@
-<div class="latestVideoEmbed" id="player" vnum='0' cid="UCUjBEPnZZvXKNSQdGHUxLaQ" style="position: fixed;
-right: 0;
-bottom: 0;
-min-width: 100%;
-min-height: 100%;
-width: auto;
-height: auto;
-z-index: -100;}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latest YouTube Video</title>
+    <style>
+        /* Style to make the iframe responsive and fill the screen */
+        #player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <iframe class="latestVideoEmbed" id="player" frameborder="0" allowfullscreen="1" title="YouTube video player"></iframe>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 
-<script>
+    <script>
+        var channelId = "UCUjBEPnZZvXKNSQdGHUxLaQ"; // Replace with your YouTube channel ID
+        var apiKey = "AIzaSyDNr8isM00icgUKnQ6Nb-Eh7uJroFQ9yw0"; // Replace with your YouTube Data API key
 
-var reqURL = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://www.youtube.com/feeds/videos.xml?channel_id=");
+        // Function to fetch the latest video from the channel
+        function loadLatestVideo() {
+            $.ajax({
+                url: `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=1`,
+                dataType: "json",
+                success: function (data) {
+                    if (data.items.length > 0) {
+                        var videoId = data.items[0].id.videoId;
+                        var videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                        document.getElementById("player").src = videoUrl;
+                    } else {
+                        console.error("No videos found.");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching data:", error);
+                }
+            });
+        }
 
-function loadVideo(iframe) {
-  $.getJSON(reqURL + iframe.getAttribute('cid'),
-    function(data) {
-      var videoNumber = (iframe.getAttribute('vnum') ? Number(iframe.getAttribute('vnum')) : 0);
-      console.log(videoNumber);
-      var link = data.items[videoNumber].link;
-      var title=data.items[videoNumber].title;
-      id = link.substr(link.indexOf("=") + 1);
-
-      iframe.setAttribute("src", "https://youtube.com/embed/" + id + "?rel=0?version=3&autoplay=1&cc_load_policy=1&cc_lang_pref=en&controls=1&showinfo=1&loop=1&enablejsapi=1&playlist=" + id);
-    }
-  );
-}
-
-
-var iframes = document.getElementsByClassName('latestVideoEmbed');
-for (var i = 0, len = iframes.length; i < len; i++) {
-  loadVideo(iframes[i]);
-  const tag = document.createElement('script')
-tag.src = 'https://www.youtube.com/iframe_api'
-const firstScriptTag = document.getElementsByTagName('script')[0]
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
-
-let player
-
-const onApiChange = _ => {   
-  if (typeof player.setOption === 'function') {
-    player.setOption('captions', 'track', {languageCode: 'en'})
-  }  
-}
-
-const onReady = _ => {   
-  player.playVideo()
-}
-
-function onYouTubePlayerAPIReady() {
-  player = new YT.Player('player', {
-    videoId: id,
-    playerVars: {
-      'cc_load_policy': 1,
-      'controls': 0,           
-      'showinfo': 0,
-      'rel': 0,
-      'loop': 1,
-      'playlist': id
-    },
-    events: {
-      onReady,
-      onApiChange
-    }
-  })
-}
-}
-
-window.onerror = function() {
-    location.reload();
-}
-
-</script>
+        // Load the latest video when the page loads
+        $(document).ready(function () {
+            loadLatestVideo();
+        });
+    </script>
+</body>
+</html>
