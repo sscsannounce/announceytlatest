@@ -1,53 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latest YouTube Video</title>
-    <style>
-        /* Style to make the iframe responsive and fill the screen */
-        #player {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+    <!-- Prevent caching for the entire page -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- ... other head elements ... -->
+
+    <!-- Include your scripts here -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <!-- ... other scripts ... -->
 </head>
 <body>
-    <iframe class="latestVideoEmbed" id="player" frameborder="0" allowfullscreen="1" title="YouTube video player"></iframe>
+    <!-- Your page content here -->
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <div class="latestVideoEmbed" id="player" vnum='0' cid="UCUjBEPnZZvXKNSQdGHUxLaQ" style="position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -100;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+    </div>
 
     <script>
-        var channelId = "UCUjBEPnZZvXKNSQdGHUxLaQ"; // Replace with your YouTube channel ID
-        var apiKey = "AIzaSyDNr8isM00icgUKnQ6Nb-Eh7uJroFQ9yw0"; // Replace with your YouTube Data API key
+        var reqURL = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://www.youtube.com/feeds/videos.xml?channel_id=");
 
-        // Function to fetch the latest video from the channel
-        function loadLatestVideo() {
-            $.ajax({
-                url: `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=1`,
-                dataType: "json",
-                success: function (data) {
-                    if (data.items.length > 0) {
-                        var videoId = data.items[0].id.videoId;
-                        var videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-                        document.getElementById("player").src = videoUrl;
-                    } else {
-                        console.error("No videos found.");
+        function loadVideo(iframe) {
+            $.getJSON(reqURL + iframe.getAttribute('cid'), function(data) {
+                var videoNumber = (iframe.getAttribute('vnum') ? Number(iframe.getAttribute('vnum')) : 0);
+                console.log(videoNumber);
+                var link = data.items[videoNumber].link;
+                var title = data.items[videoNumber].title;
+                var id = link.substr(link.indexOf("=") + 1);
+
+                // Initialize the YouTube API script
+                var tag = document.createElement('script');
+                tag.src = 'https://www.youtube.com/iframe_api';
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+                // Define the player variable
+                var player;
+
+                // Function to handle API changes
+                function onApiChange() {
+                    if (typeof player.setOption === 'function') {
+                        player.setOption('captions', 'track', { languageCode: 'en' });
                     }
-                },
-                error: function (xhr, status, error) {
-                    console.error("Error fetching data:", error);
+                }
+
+                // Function to start playing the video
+                function onReady() {
+                    player.playVideo();
+                }
+
+                // Callback when YouTube API is ready
+                window.onYouTubePlayerAPIReady = function () {
+                    player = new YT.Player('player', {
+                        videoId: id,
+                        playerVars: {
+                            'cc_load_policy': 1,
+                            'controls': 0,
+                            'showinfo': 0,
+                            'rel': 0,
+                            'loop': 1,
+                            'playlist': id
+                        },
+                        events: {
+                            onReady: onReady,
+                            onApiChange: onApiChange
+                        }
+                    });
+                }
+
+                // Handle errors
+                window.onerror = function () {
+                    location.reload();
                 }
             });
         }
 
-        // Load the latest video when the page loads
-        $(document).ready(function () {
-            loadLatestVideo();
-        });
+        var iframes = document.getElementsByClassName('latestVideoEmbed');
+        for (var i = 0, len = iframes.length; i < len; i++) {
+            loadVideo(iframes[i]);
+        }
     </script>
 </body>
 </html>
