@@ -1,0 +1,147 @@
+<!-- Credit to original code (adapted for South Seneca): https://gist.github.com/adamjohnson/bf601ea10611a0a46566eb66060b332d#file-google-calendar-html -->
+<!-- This calendar doesn't include snow days, will show current letter day anyway -->
+<!-- The Google Calendar that this script pulls from must be updated once, yearly -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Today's Date and Letter Day</title>
+  </head>
+
+  <body>
+    <style>
+      html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+body {
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Prevent scrolling when content overflows */
+}
+
+#js-gcal-event {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.gcal-event {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gcal-event__td-time {
+  font-family: "Arial Black", Gadget, sans-serif;
+  font-size: 70px;
+  color: #000;
+  font-weight: 920;
+  text-decoration: none;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: none;
+  text-align: center;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+    </style>
+    <div id="js-gcal-event">
+    	<h1 id="todayDate">Loading...</h1>
+    </div>
+
+    <script src="https://cdn.polyfill.io/v3/polyfill.min.js?version=3.52.1&features=Array.prototype.forEach,console,Date.prototype.toISOString,document,Intl,Map,Promise,Set"></script>
+    <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.8.23/plugin/localizedFormat.js"></script>
+    <script>dayjs.extend(window.dayjs_plugin_localizedFormat)</script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+
+function updateTime(){
+
+currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    setTimeout(updateTime, 5000);
+}
+
+updateTime();
+
+
+    </script>
+    <script>
+function printCalendar () {
+   setTimeout(printCalendar, 5000);
+  var calendarId = 'c_egcc1fojtqkdk25vc8hcgedlgc@group.calendar.google.com';
+  var apiKey = 'AIzaSyAqUqXnxG-ElP0CVAPGyLHGqUNrg5QWLoM';
+  var userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (!userTimeZone) {
+    userTimeZone = 'America/New_York';
+  }
+  gapi.client.init({
+    'apiKey': apiKey,
+    'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
+  }).then(function () {
+    return gapi.client.calendar.events.list({
+      'calendarId': calendarId,
+      'timeZone': userTimeZone,
+      'singleEvents': true,
+      'timeMin': (new Date()).toISOString(),
+      'maxResults': 1,
+      'orderBy': 'startTime'
+    });
+  }).then(function (response) {
+    if (response.result.items) {
+      var getNowPlayingDiv = document.getElementById('js-gcal-event');
+      var calendarRows = ['<table class="gcal-event"><tbody>'];
+      response.result.items.forEach(function (entry) {
+        var eventDate = dayjs(entry.start.dateTime).format('LL');
+
+var eventDescr = entry.summary;
+var firstStopString = " Day";
+var secondStopString = "No School";
+
+var firstIndex = eventDescr.indexOf(firstStopString);
+var secondIndex = eventDescr.indexOf(secondStopString);
+
+if (firstIndex !== -1 && (secondIndex === -1 || firstIndex < secondIndex)) {
+  eventDescr = eventDescr.substring(0, firstIndex + firstStopString.length);
+} else if (secondIndex !== -1 && (firstIndex === -1 || secondIndex < firstIndex)) {
+  eventDescr = eventDescr.substring(0, secondIndex + secondStopString.length);
+}
+
+        calendarRows.push('' +
+          '<tr class="gcal-event__tr">' +
+            '<td class="gcal-event__td-time">' + currentTime + ' - ' +
+              '<time class="gcal-event__time-start">' + eventDate + '</time>'+ "&nbsp;- " + eventDescr +
+            '</tr>' +
+            '</td>' +
+          '');
+      });
+      calendarRows.push('</tbody></table>');
+      getNowPlayingDiv.innerHTML = calendarRows.join('');
+    }
+  }, function (reason) {
+    console.log('Error: ' + reason.result.error.message);
+  });
+}
+gapi.load('client', printCalendar);
+      </script>
+  </body>
+</html>
